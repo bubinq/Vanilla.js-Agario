@@ -3,12 +3,13 @@ const ctx = canvas.getContext("2d");
 
 const WIDTH = (canvas.width = window.innerWidth);
 const HEIGHT = (canvas.height = window.innerHeight);
-const MAX_FOOD = 400;
+const MAX_FOOD = 100;
 const MASS_RATIO = 50;
 const mouseCoordinates = {
   x: 0,
   y: 0,
 };
+let food = [];
 
 const colors = [
   "#FF5733",
@@ -86,14 +87,19 @@ class Food {
   }
 }
 
+generateFood();
+let bestCandidate = getFarthestPos(food, 10);
+
 let player = new Player(
-  WIDTH * Math.random() - 10,
-  HEIGHT * Math.random() - 10,
+  bestCandidate.x,
+  bestCandidate.y,
   "Gosho",
   20,
   colors[Math.floor(Math.random() * colors.length)]
 );
 window.addEventListener("mousemove", movePlayer);
+// ADD EVENTLISTENER FOR KEYPRESS === SPACE
+// TAKE PLAYER RADIUS AND DIVIDE IT BY 2 ALSO MAKE ANOTHER COPY OF THE PLAYER WITH THE SAME SIZE
 
 function movePlayer(ev) {
   const x = ev.clientX;
@@ -116,7 +122,6 @@ function movePlayer(ev) {
   player.velocity.y = velocity.y / (player.radius * 0.05);
 }
 
-let food = [];
 
 function generateFood() {
   for (let i = 0; i < MAX_FOOD; i++) {
@@ -147,6 +152,43 @@ function respawnFood() {
 
 setInterval(respawnFood, 5000);
 
+function getFarthestPos(points, radius) {
+  let bestCandidate,
+    maxDistance = 0;
+  let numOfCandidates = 10;
+
+  if (points.length === 0) {
+    return {
+      x: Math.random() * WIDTH - radius,
+      y: Math.random() * HEIGHT - radius,
+    };
+  }
+
+  for (let ci = 0; ci < numOfCandidates; ci++) {
+    let minDistance = Infinity;
+    let candidate = {
+      x: Math.random() * WIDTH - radius,
+      y: Math.random() * HEIGHT - radius,
+    };
+    candidate.radius = radius;
+
+    for (let pi = 0; pi < points.length; pi++) {
+      let distance = Math.hypot(
+        points[pi].y - candidate.y,
+        points[pi].x - candidate.x
+      );
+      if (distance < minDistance) {
+        minDistance = distance;
+      }
+    }
+    if (minDistance > maxDistance) {
+      bestCandidate = candidate;
+      maxDistance = minDistance;
+    }
+  }
+  return bestCandidate
+}
+
 function animate() {
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
   player.update();
@@ -157,9 +199,7 @@ function animate() {
       food.splice(idx, 1);
     }
   });
-
   requestAnimationFrame(animate);
 }
 
-generateFood();
 animate();
